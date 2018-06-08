@@ -10,6 +10,7 @@ rm(list = ls())
 library(dplyr)
 library(ggplot2)
 library(purrr)
+library(tidyr)
 
 # Call my functions:
 # source("myFuncs.R")
@@ -180,10 +181,10 @@ foo2 + foo2 # Trans
 sum(foo2) + foo2 # Trans (with aggr)
 1:3 + foo2 # trans
 
-#######################################
-############# Key Point # 1 ###########
-############# Vector Recycling ########
-#######################################
+#############################################################
+############# Key Point # 1 #################################
+############# Vector Recycling ##############################
+#############################################################
 
 1:4 + foo2
 
@@ -311,3 +312,248 @@ summary(foo.df)
 # Use functions to find out:
 typeof()
 class()
+
+# Element 4: Logical Expressions
+# Asking and combining questions
+# Relational operators: Yes/No questions
+# == equivalency
+# != non-equivalency
+# !x the negation of x, where x is a logical vector
+# <, >, <=, >=
+
+!foo4
+n > p
+p < p
+
+# The output is ALWAYS a logical vector!
+
+# don't get confused! see ==, <=, and...
+# <- assign (or =, but don't do that)
+# = arguments in a function
+
+# Logical operators: Combine Yes/No questions
+# & AND - TRUE in EVERY question
+# | OR  - TRUE in AT LEAST one question
+# %in% WITHIN - equates to == with |
+
+# Apply to logical data
+# All healthy
+subset(foo.df, foo.df$healthy == TRUE)
+subset(foo.df, foo.df$healthy)
+subset(foo.df, healthy)
+
+# The dplyr way: The filter verb
+foo.df %>%
+  filter(healthy)
+
+# All false:
+foo.df %>%
+  filter(healthy == F)
+
+foo.df %>%
+  filter(!healthy)
+
+# Apply to numeric data (int or dbl)
+# below 10
+foo.df %>%
+  filter(quantity < 10)
+
+# Exactly 31
+foo.df %>%
+  filter(quantity == 31)
+
+# Range: 10-20
+foo.df %>%
+  filter(quantity > 10 & quantity < 20)
+
+# What happened:
+foo.df$quantity > 10
+foo.df$quantity < 20
+
+# What if: Meaningless
+foo.df %>%
+  filter(quantity > 10 | quantity < 20)
+
+# Extremes: beyond 10-20
+foo.df %>%
+  filter(quantity < 10 | quantity > 20)
+
+# Impossible
+foo.df %>%
+  filter(quantity < 10 & quantity > 20)
+
+# What happened:
+foo.df$quantity < 10
+foo.df$quantity > 20
+
+# Apply to character data
+# Here: NO PATTERN MATCHING
+# Heart Samples:
+foo.df %>%
+  filter(tissue == "Heart")
+
+# 2 or more: Heart & Liver
+# quick and dirty:
+foo.df %>%
+  filter(tissue == "Heart" | tissue == "Liver")
+
+# More efficient: DON'T DO THIS
+foo.df %>%
+  filter(tissue == c("Heart", "Liver"))
+
+# This is Terrible... because...
+foo.df %>%
+  filter(tissue == c("Liver", "Heart"))
+
+# Why??... VECTOR RECYCLING
+foo.df$tissue == c("Heart", "Liver")
+foo.df$tissue == c("Liver", "Heart")
+
+# So... use %in% instead
+foo.df %>%
+  filter(tissue %in% c("Liver", "Heart"))
+
+# This is now the same as
+foo.df %>%
+  filter(tissue %in% c("Heart", "Liver"))
+
+# Element 5: Indexing
+# Find info according to position using []
+
+# Vectors:
+foo1
+foo1[6] # The 6th value
+foo1[p] # The pth value, i.e. 6th
+foo1[3:p] # the 3rd to the pth values
+foo1[p:length(foo1)] # from 6th to last
+
+# use combinations of:
+# integers, objects, functions
+
+# but the exciting part is... logical vectors:
+# i.e. logical expressions
+# e.g. all values less than 50
+foo1[foo1 < 50]
+
+# Data frames with []:
+# 2 Dimentional: [ rows , columns ]
+foo.df[3,] # 3rd row, ALL columns
+foo.df[,3] # ALL rows, 3rd column
+foo.df[3:6, "quantity"] # 3rd to 6th rows, only quantity
+foo.df[3:6, 3] # 3rd to 6th rows, only quantity
+foo.df[3:6, -1] # exclude healthy, or
+foo.df[3:6, c("tissue", "quantity")]
+
+# combine in all variety of ways!
+# to prevent switching between vector and data frame
+# use tibbles :)
+foo.df <- as_tibble(foo.df)
+foo.df[foo.df$quantity < 10, "tissue"] # low quantity, only tissue
+
+# basically, this is subset() or filter()
+subset(foo.df, quantity < 10, select = "tissue")
+
+# or, easier...
+foo.df %>%
+  filter(quantity < 10) %>%
+  select(tissue)
+
+# NOT possible: missing comma :/
+foo.df[foo.df$tissue == "Heart"] # only heart rows
+# but... no comma is short-hand for columns
+foo.df[3] # the 3rd column
+foo.df[,3] # the same here
+
+# So I don't need a comma in [] for a data frame
+# But what if I DO have one for a vector?
+foo1[,p]
+
+# Element 8: Factor Variables (with levels)
+# Categorical variables (with groups)
+# aka discrete, qualitative
+
+#e.g.
+PlantGrowth$group
+
+# factor is a special class of type integer
+# with labels
+typeof(PlantGrowth$group)
+class(PlantGrowth$group)
+
+str(PlantGrowth)
+
+# also:
+foo3 # character
+foo.df$tissue # now a factor
+
+str(foo.df)
+# The integer values are: 4 1 6 5 3 2
+# The associated labels are:
+levels(foo.df$tissue)
+# "Brain"     "Heart"     "Intestine" "Liver"     "Muscle"   "Testes"
+
+# example of a common problem:
+xx <- c(23:27, "bob")
+xx # A character vector
+# convert to a data.frame:
+test <- data.frame(xx)
+test$xx # automatically converted to factor :/
+
+# convert from factor to integer: test$xx
+as.integer(test$xx) # convert from factor, gets group ID
+as.integer(as.character(test$xx)) # so, convert first to character
+
+# Contrast that to converting from character to integer: xx
+as.integer(xx) # convert from character, gets number
+
+# Alternatively:
+test <- data.frame(xx, stringsAsFactors = F)
+test$xx # remains character
+
+# Element 9 & 10: tidy data and split-apply-combine
+
+# Work on a new dataset:
+PlayData <- data.frame(type = rep(c("A", "B"), each = 2),
+                       time = 1:2,
+                       height = seq(10, 40, 10),
+                       width = seq(50, 80, 10))
+
+# make the data tidy using the tidyr package
+# four arguments to gather()
+# 1 - data (input),
+# 2&3 - key, value (the names of the output columns)
+# 4 - either ID or MEASURE vars
+gather(PlayData, key, value, -c(type, time)) # with ID
+
+PlayData.t <- gather(PlayData, key, value, c(height, width)) # with MEASURE
+
+# now for split-apply-combine:
+# Split according to some variable(s)
+# Apply some functions
+# Combine for output
+
+# Scenario 1: compare by key (i.e. height/width)
+PlayData$height/PlayData$width # using original data
+
+# with tidy data: aggregration
+# Scenario 1: (group according to type and time)
+PlayData.t %>%
+  group_by(type, time) %>%
+  summarise(avg = mean(value))
+
+# Scenario 2: (group according to time and key)
+PlayData.t %>%
+  group_by(time, key) %>%
+  summarise(avg = mean(value))
+
+# Scenario 3: (group according to type and key)
+PlayData.t %>%
+  group_by(type, key) %>%
+  summarise(avg = mean(value))
+
+
+
+
+
+
+
