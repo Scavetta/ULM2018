@@ -224,13 +224,19 @@ protein.df %>%
   filter(Ratio != "Ratio.H.L.Sig") %>%                           # Remove uninteresting H.L Ratio
   mutate(Ratio = recode_factor(Ratio,                            # Relabel ratios to match the Int data frame
                                `Ratio.M.L.Sig` = "M.L",
-                               `Ratio.H.M.Sig` = "H.M")) %>% 
+                               `Ratio.H.M.Sig` = "H.M"),
+         SigCat = cut(Significance,                              # Make colour labels for sig values
+                      c(-Inf, 1e-11, 1e-4, 0.05, Inf),
+                      c("red", "orange", "blue", "grey30"))) %>%
   full_join(onlyRatios) %>%                                      # Merge with the log2 ratios
   full_join(onlyInt) %>%                                         # Merge with the Intensities
-  filter(complete.cases(.), Uniprot != "") -> allData            # Take only observations that have complete data and non-empty Uniprot 
+  filter(complete.cases(.), Uniprot != "") %>%                   # Take only observations that have complete data and non-empty Uniprot 
+  arrange(desc(Significance)) -> allData                         # Order according to sig so that low sig are plotted first
 
 # Make a plot
-ggplot(allData, aes(Expression, Intensity, col = Significance)) +
-  geom_point() +
+ggplot(allData, aes(Expression, Intensity, col = SigCat)) +
+  geom_point(alpha = 0.5, shape = 16) +
   # scale_x_continuous(limits = c(-5,5)) +
-  facet_grid(. ~ Ratio)
+  scale_colour_identity() +
+  facet_grid(. ~ Ratio) +
+  theme_classic()
