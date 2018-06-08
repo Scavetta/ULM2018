@@ -552,6 +552,46 @@ PlayData.t %>%
   summarise(avg = mean(value))
 
 
+#######################
+# An example with regular expressions:
+
+ratios <- c("Ratio.H.M.Sig", "Ratio.H.L.Sig", "Ratio.M.L.Sig")
+sub("Ratio.", "", ratios)
+
+# Which one is H.M?
+library(stringr)
+# logical vector
+ratios == "Ratio.H.M.Sig"  # 100% match
+grepl("H.M", ratios)       # pattern match
+str_detect(ratios, "H.M")  # pattern match with stringr
+
+# integer of TRUE positions
+which(ratios == "Ratio.H.M.Sig")  # 100% match
+grep("H.M", ratios)               # pattern match
+which(str_detect(ratios, "H.M"))  # pattern match with stringr
+
+# Matching patterns:
+str_extract(ratios, "H.*$")
+str_extract(ratios, "^.*H")
+str_extract(ratios, "H.*i")
+
+##########################
+# An aside:
+
+length(foo.df) # the number of elements
+# i.e. ncol() --- confusing :/
+
+# But this is ok:
+dim(foo.df)
+ncol(foo.df)
+nrow(foo.df)
+
+length(foo2) # 1D vector
+dim(foo2)
+
+
+
+
 
 
 
